@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dolphins – Netball Rotation</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0d0d;--card:#1a1a1a;--court:#111111;--line:#ffffff08;
+    --accent:#e8192c;--accent2:#b3101f;--penny:#f0ede6;
+    --text:#f0ede6;--muted:#888;--border:#2e2e2e;
+    --err:#e87070;--err-bg:#2e1515;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:repeating-linear-gradient(90deg,var(--line) 0,var(--line) 1px,transparent 1px,transparent 80px),
+               repeating-linear-gradient(0deg,var(--line) 0,var(--line) 1px,transparent 1px,transparent 80px);}
+  body::after{content:'';position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent 0%,#e8192c 30%,#e8192c 70%,transparent 100%);pointer-events:none;z-index:10;}
+  .app{position:relative;z-index:1;max-width:820px;margin:0 auto;padding:16px 12px 60px;}
+
+  header{text-align:center;margin-bottom:16px;}
+  header h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.8rem,7vw,3.2rem);color:var(--accent);letter-spacing:.05em;line-height:1;}
+  header p{color:var(--muted);font-size:.8rem;margin-top:4px;}
+
+  .week-nav{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;}
+  .week-btn{padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--court);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
+  .week-btn.active{background:var(--accent);color:#111;border-color:var(--accent);}
+  .week-btn:hover:not(.active){background:#222;color:var(--text);}
+
+  .main-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;}
+  .main-tab{padding:10px 4px;border-radius:9px;border:1px solid var(--border);background:var(--court);color:var(--muted);text-align:center;font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:600;cursor:pointer;transition:all .18s;}
+  .main-tab.active{background:var(--accent);color:#111;border-color:var(--accent);}
+  .main-tab:hover:not(.active){background:#222;color:var(--text);}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* ── OVERVIEW ── */
+  .overview-wrap{overflow-x:auto;}
+  .ov-table{width:100%;border-collapse:collapse;}
+  .ov-table th{font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:.07em;color:var(--muted);background:var(--court);padding:7px 6px;border-bottom:2px solid var(--border);text-align:center;white-space:nowrap;}
+  .ov-table th.pos-th{text-align:left;color:var(--accent);min-width:46px;padding-left:8px;}
+  .ov-table td{padding:5px 5px;border-bottom:1px solid #222;text-align:center;vertical-align:middle;}
+  .ov-table td.pos-cell{text-align:left;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:.06em;color:var(--accent);background:var(--court);padding-left:8px;white-space:nowrap;}
+  .ov-table td.pos-cell span{display:block;font-family:'DM Sans',sans-serif;font-size:.55rem;font-weight:400;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
+  .ov-table tr:hover td{background:#1a1a1a;}
+  .ov-table tr:hover td.pos-cell{background:var(--court);}
+  .ov-table tr:last-child td{border-bottom:none;}
+  .p-chip{display:inline-flex;align-items:center;border-radius:5px;padding:3px 7px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;border:1px solid transparent;}
+  .p-chip.normal{color:var(--text);}
+  .p-chip.normal:hover{background:#1e1e1e;border-color:var(--border);}
+  .p-chip.is-penny{background:#2a0a0e;color:#ff6b7a;border-color:#e8192c;}
+  .bench-row td{background:#0a0a0a;color:var(--muted);font-size:.74rem;font-weight:400;font-style:italic;}
+  .bench-row td.pos-cell{background:#0a0a0a;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--muted);}
+
+  /* ── QUARTER ── */
+  .q-tabs{display:flex;gap:7px;margin-bottom:12px;}
+  .q-tab{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--court);color:var(--muted);text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.07em;cursor:pointer;transition:all .18s;}
+  .q-tab.active{background:var(--accent2);color:white;border-color:var(--accent2);}
+  .q-tab:hover:not(.active){background:#222;color:var(--text);}
+  .bib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:9px;margin-bottom:12px;}
+  .bib-card{background:var(--court);border:1.5px solid var(--border);border-radius:12px;padding:13px 10px 10px;text-align:center;cursor:pointer;transition:border-color .2s;}
+  .bib-card:hover{border-color:#555;}
+  .bib-card.is-penny{border-color:#e8192c;box-shadow:0 0 14px #e8192c22;}
+  .bib-id{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.08em;line-height:1;}
+  .bib-pos-name{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:3px 0 8px;}
+  .bib-player{font-size:.82rem;font-weight:600;padding:5px 4px;border-radius:6px;background:#1a1a1a;color:var(--text);border:1px solid var(--border);min-height:32px;display:flex;align-items:center;justify-content:center;}
+  .bib-player.is-penny{color:#ff6b7a;background:#1a0508;border-color:#e8192c;}
+  .bench-section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .bench-label{font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:.06em;color:var(--muted);white-space:nowrap;}
+  .bench-chip{padding:4px 11px;border-radius:14px;background:var(--court);border:1px solid var(--border);font-size:.78rem;font-weight:600;color:var(--muted);}
+  .bench-chip.is-penny{border-color:#e8192c;color:#ff6b7a;}
+
+  /* ── HANDOFF ── */
+  .trans-tabs{display:flex;gap:7px;margin-bottom:12px;}
+  .trans-tab{flex:1;padding:10px 4px;border-radius:8px;border:1px solid var(--border);background:var(--court);color:var(--muted);text-align:center;font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:600;cursor:pointer;transition:all .18s;}
+  .trans-tab.active{background:var(--accent2);color:white;border-color:var(--accent2);}
+  .trans-tab:hover:not(.active){background:#222;color:var(--text);}
+
+  .handoff-grid{display:flex;flex-direction:column;gap:7px;margin-bottom:12px;}
+  .handoff-row{display:grid;grid-template-columns:1fr 28px 42px 28px 1fr;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:8px 10px;transition:border-color .2s;}
+  .handoff-row:hover{border-color:#555;}
+  .handoff-row.is-penny-row{border-color:#e8192c;background:#130205;}
+  .handoff-row.is-stays{opacity:.55;}
+  .h-player{display:flex;flex-direction:column;gap:2px;}
+  .h-player.left{align-items:flex-end;}
+  .h-player.right{align-items:flex-start;}
+  .h-name{font-size:.82rem;font-weight:700;line-height:1.2;}
+  .h-name.penny{color:#ff6b7a;}
+  .h-pos{font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:1px 5px;border-radius:3px;background:#1a1a1a;color:var(--accent);border:1px solid #333;margin-top:1px;}
+  .h-mid{display:flex;flex-direction:column;align-items:center;gap:1px;}
+  .h-bib{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--accent);background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:1px 5px;line-height:1.4;}
+  .h-badge{font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:1px 4px;border-radius:3px;white-space:nowrap;margin-top:1px;}
+  .badge-pass{background:#1e1e1e;color:var(--muted);}
+  .badge-stays{background:#141414;color:#555;}
+  .badge-penny{background:#1a0508;color:#ff6b7a;}
+
+  .flow-bar{border-radius:9px;padding:8px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .flow-on{background:var(--card);border:1px solid #333;}
+  .flow-off{background:#0a0a0a;border:1px solid #3d2a1a;}
+  .flow-label{font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:.06em;white-space:nowrap;}
+  .flow-chip{padding:3px 10px;border-radius:12px;background:var(--court);border:1px solid var(--border);font-size:.76rem;font-weight:600;}
+  .flow-chip.penny{border-color:#e8192c;color:#ff6b7a;}
+
+  /* ── EDIT MODAL ── */
+  .modal-overlay{position:fixed;inset:0;background:#000000bb;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal{background:#1a1a1a;border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:360px;}
+  .modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--accent);letter-spacing:.06em;margin-bottom:4px;}
+  .modal-sub{color:var(--muted);font-size:.78rem;margin-bottom:14px;}
+  .player-opts{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;max-height:360px;overflow-y:auto;}
+  .player-opt{padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--court);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;justify-content:space-between;}
+  .player-opt:hover{background:#222;border-color:#444;}
+  .player-opt.selected{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .player-opt.is-penny-opt{border-color:#e8192c;color:#ff6b7a;}
+  .player-opt.is-penny-opt.selected{background:#e8192c;color:#fff;}
+  .opt-initials{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.06em;opacity:.6;}
+  .modal-btns{display:flex;gap:8px;}
+  .btn{flex:1;padding:10px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .15s;}
+  .btn-save{background:var(--accent);color:#111;}
+  .btn-save:hover{background:#ff2d42;}
+  .btn-cancel{background:var(--court);color:var(--muted);border:1px solid var(--border);}
+  .btn-cancel:hover{background:#222;color:var(--text);}
+
+  .hl-btn{background:none;border:1px solid #333;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;padding:2px 10px;border-radius:12px;color:#888;transition:all .2s;}
+  .hl-btn.active{color:#ff6b7a;border-color:#e8192c;}
+  .hl-btn:hover{color:var(--text);border-color:#555;}
+
+  .share-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:14px;padding:11px;border-radius:9px;border:1px solid var(--border);background:var(--court);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .18s;}
+  .share-btn:hover{background:#222;color:var(--text);border-color:#555;}
+
+  /* Share modal canvas area */
+  #share-preview{width:100%;border-radius:10px;display:block;margin-bottom:14px;}
+  .share-actions{display:flex;gap:8px;}
+
+  /* Lock button */
+  .lock-btn{background:none;border:none;cursor:pointer;font-size:1.3rem;padding:4px 6px;border-radius:8px;transition:all .2s;vertical-align:middle;line-height:1;opacity:.5;}
+  .lock-btn:hover{opacity:1;background:#1e1e1e;}
+  .lock-btn.unlocked{opacity:1;color:#e8192c;}
+
+  /* Password modal */
+  .pin-input{width:100%;padding:12px 14px;border-radius:9px;border:1px solid var(--border);background:var(--court);color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;outline:none;transition:border .2s;margin-bottom:10px;letter-spacing:.1em;}
+  .pin-input:focus{border-color:var(--accent);}
+  .pin-input.error{border-color:var(--err);animation:shake .3s ease;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .pin-error{color:var(--err);font-size:.78rem;text-align:center;min-height:18px;margin-bottom:8px;}
+  .lock-status{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;color:#555;padding:2px 8px;border-radius:10px;border:1px solid #222;}
+    .bib-grid{grid-template-columns:repeat(2,1fr);}
+    .ov-table td,.ov-table th{padding:4px 3px;font-size:.7rem;}
+    .p-chip{font-size:.7rem;padding:2px 5px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🐬 The Dolphins <button id="lock-btn" class="lock-btn" onclick="toggleLock()" title="Lock / unlock editing">🔒</button></h1>
+    <p>Under 13s · Winter 2026 · <button id="highlight-btn" class="hl-btn" onclick="openHighlightPicker()">★ Highlight a player</button></p>
+  </header>
+
+  <div class="week-nav" id="week-nav"></div>
+
+  <div class="main-tabs">
+    <div class="main-tab active" onclick="setTab('overview')">🗓 Overview</div>
+    <div class="main-tab" onclick="setTab('quarter')">📍 Quarter</div>
+    <div class="main-tab" onclick="setTab('handoff')">🔄 Handoffs</div>
+  </div>
+
+  <div class="panel active" id="panel-overview">
+    <div class="overview-wrap"><table class="ov-table" id="ov-table"></table></div>
+    <button class="share-btn" onclick="openShare()">⬆ Share this week's rotation</button>
+  </div>
+  <div class="panel" id="panel-quarter">
+    <div class="q-tabs">
+      <div class="q-tab active" onclick="setQ(0)">Q1</div>
+      <div class="q-tab" onclick="setQ(1)">Q2</div>
+      <div class="q-tab" onclick="setQ(2)">Q3</div>
+      <div class="q-tab" onclick="setQ(3)">Q4</div>
+    </div>
+    <div class="bib-grid" id="bib-grid"></div>
+    <div class="bench-section">
+      <div class="bench-label">🪑 Bench</div>
+      <div id="bench-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+  <div class="panel" id="panel-handoff">
+    <div class="trans-tabs">
+      <div class="trans-tab active" onclick="setTrans(0)">Q1 → Q2</div>
+      <div class="trans-tab" onclick="setTrans(1)">Q2 → Q3</div>
+      <div class="trans-tab" onclick="setTrans(2)">Q3 → Q4</div>
+    </div>
+    <div id="handoff-area"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="lock-modal" style="display:none" onclick="if(event.target===this)closeLockModal()">
+  <div class="modal" style="max-width:320px;">
+    <div class="modal-title" id="lock-modal-title">🔒 Unlock Editing</div>
+    <div class="modal-sub" style="margin-bottom:14px;">Enter the password to enable editing</div>
+    <input class="pin-input" id="pin-input" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')submitPin()">
+    <div class="pin-error" id="pin-error"></div>
+    <div class="modal-btns">
+      <button class="btn btn-cancel" onclick="closeLockModal()">Cancel</button>
+      <button class="btn btn-save" onclick="submitPin()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="highlight-modal" style="display:none" onclick="if(event.target===this)closeHighlightPicker()">
+  <div class="modal">
+    <div class="modal-title">★ Highlight Player</div>
+    <div class="modal-sub">Pick a player to highlight throughout the app</div>
+    <div class="player-opts" id="highlight-opts"></div>
+    <div style="text-align:center;margin-top:4px;">
+      <button class="btn btn-cancel" style="width:100%" onclick="clearHighlight()">Remove highlight</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div class="player-opts" id="player-opts"></div>
+    <div class="modal-btns">
+      <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-save" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="share-modal" style="display:none" onclick="if(event.target===this)closeShare()">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">⬆ Share Rotation</div>
+    <div class="modal-sub" id="share-sub" style="margin-bottom:12px;"></div>
+    <canvas id="share-preview"></canvas>
+    <div class="share-actions">
+      <button class="btn btn-cancel" onclick="copyShareText()">📋 Copy text</button>
+      <button class="btn btn-save" onclick="downloadImage()">🖼 Open image</button>
+    </div>
+    <div id="share-copied" style="text-align:center;font-size:.78rem;color:#4caf7d;margin-top:8px;min-height:18px;"></div>
+  </div>
+</div>
+
+<script>
+// ── Player data ──
+const PLAYERS = [
+  { id:'TP', name:'Tyla' },
+  { id:'JD', name:'Josie' },
+  { id:'GF', name:'Georgie F' },
+  { id:'SL', name:'Sadie' },
+  { id:'BD', name:'Billie' },
+  { id:'GS', name:'Georgie S' },
+  { id:'AC', name:'Ava' },
+  { id:'PT', name:'Penny' },
+  { id:'SS', name:'Stella' },
+  { id:'TN', name:'Tora' },
+];
+const idToName = Object.fromEntries(PLAYERS.map(p=>[p.id,p.name]));
+const ALL_IDS = PLAYERS.map(p=>p.id);
+
+// Dynamic highlight — persisted to localStorage
+let highlightId = localStorage.getItem('nb_highlight') || null;
+
+function isHL(id){ return highlightId && id === highlightId; }
+
+function updateHighlightBtn(){
+  const btn = document.getElementById('highlight-btn');
+  if(!btn) return;
+  if(highlightId){
+    btn.textContent = '★ ' + idToName[highlightId];
+    btn.classList.add('active');
+  } else {
+    btn.textContent = '★ Highlight a player';
+    btn.classList.remove('active');
+  }
+}
+
+function openHighlightPicker(){
+  const opts = document.getElementById('highlight-opts');
+  opts.innerHTML = '';
+  PLAYERS.forEach(p => {
+    const b = document.createElement('button');
+    const sel = p.id === highlightId;
+    b.className = 'player-opt' + (sel ? ' selected' : '');
+    if(sel) b.style.background = '#e8192c';
+    b.innerHTML = `<span>${p.name}</span><span class="opt-initials">${p.id}</span>`;
+    b.onclick = () => {
+      highlightId = p.id;
+      localStorage.setItem('nb_highlight', highlightId);
+      closeHighlightPicker();
+      updateHighlightBtn();
+      renderAll();
+    };
+    opts.appendChild(b);
+  });
+  document.getElementById('highlight-modal').style.display = 'flex';
+}
+
+function closeHighlightPicker(){ document.getElementById('highlight-modal').style.display = 'none'; }
+
+function clearHighlight(){
+  highlightId = null;
+  localStorage.removeItem('nb_highlight');
+  closeHighlightPicker();
+  updateHighlightBtn();
+  renderAll();
+}
+
+const POSITIONS = [
+  {id:'GS',name:'Goal Shooter'},
+  {id:'GA',name:'Goal Attack'},
+  {id:'WA',name:'Wing Attack'},
+  {id:'C', name:'Centre'},
+  {id:'WD',name:'Wing Defence'},
+  {id:'GD',name:'Goal Defence'},
+  {id:'GK',name:'Goal Keeper'},
+];
+
+// ── Season data (verified: every quarter has 7 unique players) ──
+const RAW = [
+  {date:'14 Mar',quarters:[
+    ['TP','GF','BD','SL','JD','GS','AC'],
+    ['TP','GF','SS','JD','PT','GS','AC'],
+    ['BD','SL','TN','TP','GS','JD','PT'],
+    ['JD','GF','SL','GS','SS','TN','PT'],
+  ]},
+  {date:'21 Mar',quarters:[
+    ['AC','JD','TP','BD','PT','SS','GS'],
+    ['GF','BD','TP','TN','PT','SS','GS'],
+    ['JD','SS','BD','TP','GS','GF','TN'],
+    ['GS','AC','TN','JD','BD','TP','GF'],
+  ]},
+  {date:'28 Mar',quarters:[
+    ['JD','TN','TP','SS','PT','SL','BD'],
+    ['TN','TP','SS','PT','GF','SL','BD'],
+    ['BD','SL','PT','GS','SS','JD','GF'],
+    ['GS','SL','TP','SS','GF','TN','JD'],
+  ]},
+  {date:'18 Apr',quarters:[
+    ['AC','TP','JD','BD','GF','TN','SS'],
+    ['SS','PT','GS','JD','BD','AC','TP'],
+    ['TN','BD','GS','SS','JD','SL','TP'],
+    ['SS','GF','SL','BD','PT','GS','TP'],
+  ]},
+  {date:'2 May',quarters:[
+    ['GS','AC','BD','GF','TP','PT','JD'],
+    ['GS','TN','SS','AC','JD','PT','BD'],
+    ['TP','TN','GF','JD','BD','GS','AC'],
+    ['TP','SS','GF','PT','TN','GS','AC'],
+  ]},
+  {date:'9 May',quarters:[
+    ['GS','SS','TN','AC','BD','GF','PT'],
+    ['BD','GF','JD','GS','SS','TN','PT'],
+    ['AC','JD','TP','BD','PT','SS','GS'],
+    ['AC','JD','TP','TN','GF','SS','GS'],
+  ]},
+  {date:'16 May',quarters:[
+    ['PT','BD','GF','SL','GS','TN','TP'],
+    ['PT','BD','SS','JD','GS','SL','TP'],
+    ['GS','AC','JD','PT','SL','TN','GF'],
+    ['GS','PT','AC','GF','JD','SL','SS'],
+  ]},
+  {date:'23 May',quarters:[
+    ['PT','BD','TN','AC','GS','GF','JD'],
+    ['TN','AC','SS','BD','JD','TP','GF'],
+    ['SS','PT','GS','TN','GF','BD','JD'],
+    ['SS','PT','GS','AC','BD','GF','JD'],
+  ]},
+  {date:'30 May',quarters:[
+    ['PT','BD','TP','AC','SS','TN','GS'],
+    ['JD','SS','TP','AC','PT','BD','TN'],
+    ['PT','GF','AC','BD','JD','SS','TN'],
+    ['GF','TP','BD','GS','AC','PT','TN'],
+  ]},
+  {date:'13 Jun',quarters:[
+    ['PT','TN','AC','GS','BD','SS','JD'],
+    ['JD','BD','SS','AC','TP','PT','GF'],
+    ['SS','GF','PT','JD','BD','AC','TN'],
+    ['TP','AC','PT','TN','SS','JD','GS'],
+  ]},
+  {date:'20 Jun',quarters:[
+    ['GF','BD','PT','SS','TP','GS','JD'],
+    ['GF','BD','PT','AC','SL','GS','TN'],
+    ['PT','GF','SS','AC','JD','BD','TN'],
+    ['PT','TP','SS','BD','JD','GF','TN'],
+  ]},
+  {date:'27 Jun',quarters:[
+    ['GF','SS','TP','AC','BD','JD','TN'],
+    ['PT','SS','BD','GF','JD','TP','GS'],
+    ['TN','TP','PT','AC','BD','SS','GF'],
+    ['TN','AC','PT','JD','SS','GF','BD'],
+  ]},
+  {date:'18 Jul',quarters:[
+    ['SS','PT','TN','JD','BD','AC','GS'],
+    ['SS','PT','TP','TN','AC','BD','JD'],
+    ['GF','JD','TN','SS','SL','AC','PT'],
+    ['GF','JD','TN','BD','PT','AC','GS'],
+  ]},
+  {date:'25 Jul',quarters:[
+    ['AC','GS','BD','PT','TP','JD','SS'],
+    ['TP','GF','BD','PT','GS','AC','TN'],
+    ['PT','TN','AC','SS','JD','BD','GF'],
+    ['JD','BD','AC','GS','TN','TP','SS'],
+  ]},
+  {date:'1 Aug',quarters:[
+    ['SS','GF','BD','JD','AC','TN','TP'],
+    ['GF','BD','SL','GS','SS','PT','AC'],
+    ['AC','JD','TN','TP','PT','SS','GS'],
+    ['AC','SL','TP','BD','GF','TN','GS'],
+  ]},
+  {date:'8 Aug',quarters:[
+    ['JD','SS','AC','GS','TP','GF','BD'],
+    ['PT','TP','SS','AC','JD','GF','BD'],
+    ['GS','BD','TP','PT','JD','SS','GF'],
+    ['GS','BD','AC','GF','TP','JD','PT'],
+  ]},
+  {date:'15 Aug',quarters:[
+    ['BD','AC','TP','GS','SS','TN','PT'],
+    ['TN','AC','PT','SL','BD','JD','SS'],
+    ['SS','PT','GS','JD','AC','GF','TN'],
+    ['SS','PT','GS','TP','JD','SL','TN'],
+  ]},
+  {date:'22 Aug',quarters:[
+    ['BD','TP','AC','SS','JD','GS','GF'],
+    ['SS','JD','TP','AC','PT','TN','BD'],
+    ['AC','GS','PT','GF','TP','BD','JD'],
+    ['JD','TN','PT','AC','BD','GS','GF'],
+  ]},
+];
+
+function loadData(){
+  try{const s=localStorage.getItem('nb_v4');if(s)return JSON.parse(s);}catch(e){}
+  return JSON.parse(JSON.stringify(RAW));
+}
+function saveData(){localStorage.setItem('nb_v4',JSON.stringify(SEASON));}
+
+let SEASON=loadData();
+let cWeek=0,cQ=0,cTrans=0,cTab='overview';
+let eWeek=0,eQ=0,ePos=0,eSel='';
+
+function n(id){return idToName[id]||id;}
+
+// ── Week nav ──
+function buildNav(){
+  const el=document.getElementById('week-nav');
+  el.innerHTML='';
+  SEASON.forEach((w,i)=>{
+    const b=document.createElement('button');
+    b.className='week-btn'+(i===cWeek?' active':'');
+    b.textContent=w.date;
+    b.onclick=()=>{cWeek=i;buildNav();renderAll();};
+    el.appendChild(b);
+  });
+}
+
+function setTab(tab){
+  cTab=tab;
+  document.querySelectorAll('.main-tab').forEach((el,i)=>el.classList.toggle('active',['overview','quarter','handoff'][i]===tab));
+  document.querySelectorAll('.panel').forEach(el=>el.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  renderAll();
+}
+
+function renderAll(){renderOverview();renderQuarter();renderHandoffs();}
+
+// ── OVERVIEW ──
+function renderOverview(){
+  const w=SEASON[cWeek];
+  let html=`<thead><tr><th class="pos-th">Position</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr></thead><tbody>`;
+  POSITIONS.forEach((pos,i)=>{
+    html+=`<tr><td class="pos-cell">${pos.id}<span>${pos.name}</span></td>`;
+    [0,1,2,3].forEach(q=>{
+      const id=w.quarters[q][i];
+      const ip=isHL(id);
+      html+=`<td><span class="p-chip ${ip?'is-penny':'normal'}" style="cursor:${isUnlocked?'pointer':'default'}" onclick="openEdit(${cWeek},${q},${i})">${n(id)}${ip?' ★':''}</span></td>`;
+    });
+    html+='</tr>';
+  });
+  html+=`<tr class="bench-row"><td class="pos-cell">🪑 Bench</td>`;
+  [0,1,2,3].forEach(q=>{
+    const on=new Set(w.quarters[q]);
+    const b=ALL_IDS.filter(p=>!on.has(p));
+    html+=`<td>${b.map(p=>isHL(p)?`<span style="color:#ff6b7a">${n(p)}</span>`:n(p)).join(', ')||'—'}</td>`;
+  });
+  html+='</tr></tbody>';
+  document.getElementById('ov-table').innerHTML=html;
+}
+
+// ── QUARTER ──
+function setQ(q){
+  cQ=q;
+  document.querySelectorAll('.q-tab').forEach((el,i)=>el.classList.toggle('active',i===q));
+  renderQuarter();
+}
+
+function renderQuarter(){
+  const w=SEASON[cWeek];
+  const qd=w.quarters[cQ];
+  const grid=document.getElementById('bib-grid');
+  grid.innerHTML='';
+  POSITIONS.forEach((pos,i)=>{
+    const id=qd[i];const ip=isHL(id);
+    const card=document.createElement('div');
+    card.className='bib-card'+(ip?' is-penny':'');
+    card.onclick=()=>openEdit(cWeek,cQ,i);
+    card.style.cursor = isUnlocked ? 'pointer' : 'default';
+    card.innerHTML=`<div class="bib-id" style="color:${ip?'#ff6b7a':'var(--accent)'}">${pos.id}</div>
+      <div class="bib-pos-name">${pos.name}</div>
+      <div class="bib-player${ip?' is-penny':''}">${n(id)}${ip?' ★':''}</div>`;
+    grid.appendChild(card);
+  });
+  const on=new Set(qd);
+  const bench=ALL_IDS.filter(p=>!on.has(p));
+  document.getElementById('bench-chips').innerHTML=bench.length
+    ?bench.map(p=>`<span class="bench-chip${isHL(p)?' is-penny':''}">${n(p)}${isHL(p)?' ★':''}</span>`).join('')
+    :'<span style="color:var(--muted);font-size:.8rem">All on court</span>';
+}
+
+// ── HANDOFFS ──
+function setTrans(t){
+  cTrans=t;
+  document.querySelectorAll('.trans-tab').forEach((el,i)=>el.classList.toggle('active',i===t));
+  renderHandoffs();
+}
+
+function renderHandoffs(){
+  const area=document.getElementById('handoff-area');
+  const w=SEASON[cWeek];
+  const fQ=w.quarters[cTrans],tQ=w.quarters[cTrans+1];
+  const fSet=new Set(fQ),tSet=new Set(tQ);
+  const comingOn=ALL_IDS.filter(p=>!fSet.has(p)&&tSet.has(p));
+  const goingOff=ALL_IDS.filter(p=>fSet.has(p)&&!tSet.has(p));
+  let html='';
+  if(comingOn.length) html+=`<div class="flow-bar flow-on"><div class="flow-label" style="color:#ff6b7a">Coming on ↑</div>${comingOn.map(p=>`<span class="flow-chip${isHL(p)?' penny':''}">${n(p)}${isHL(p)?' ★':''}</span>`).join('')}</div>`;
+  if(goingOff.length) html+=`<div class="flow-bar flow-off"><div class="flow-label" style="color:#c07050">Going off ↓</div>${goingOff.map(p=>`<span class="flow-chip${isHL(p)?' penny':''}" style="${!isHL(p)?'color:var(--muted)':''}">${n(p)}${isHL(p)?' ★':''}</span>`).join('')}</div>`;
+  if(comingOn.length||goingOff.length) html+='<div style="margin-bottom:10px"></div>';
+
+  const passes=[],stays=[];
+  POSITIONS.forEach((pos,i)=>(fQ[i]===tQ[i]?stays:passes).push({pos,from:fQ[i],to:tQ[i]}));
+
+  html+='<div class="handoff-grid">';
+  [...passes,...stays].forEach(({pos,from,to})=>{
+    const isS=from===to,isPenny=isHL(from)||isHL(to);
+    const ac=isPenny?'#ff6b7a':isS?'#444':'var(--accent)';
+    const arrow=isS
+      ?`<svg width="26" height="16" viewBox="0 0 26 16"><text x="13" y="13" text-anchor="middle" font-size="13" fill="${ac}" opacity=".5">⟳</text></svg>`
+      :`<svg width="26" height="16" viewBox="0 0 26 16"><line x1="1" y1="8" x2="20" y2="8" stroke="${ac}" stroke-width="2" stroke-linecap="round"/><polyline points="14,3 21,8 14,13" fill="none" stroke="${ac}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+    const badge=isS?`<span class="h-badge badge-stays">keeps</span>`:isPenny?`<span class="h-badge badge-penny">★ ${n(highlightId)}</span>`:`<span class="h-badge badge-pass">pass</span>`;
+    html+=`<div class="handoff-row${isPenny?' is-penny-row':''}${isS?' is-stays':''}">
+      <div class="h-player left"><div class="h-name${isHL(from)?' penny':''}">${n(from)}</div><div class="h-pos">${pos.id}</div></div>
+      <div></div>
+      <div class="h-mid"><div class="h-bib">${pos.id}</div>${arrow}${badge}</div>
+      <div></div>
+      <div class="h-player right"><div class="h-name${isHL(to)?' penny':''}">${n(to)}</div><div class="h-pos">${pos.id}</div></div>
+    </div>`;
+  });
+  html+='</div>';
+  area.innerHTML=html;
+}
+
+// ── LOCK / UNLOCK ──
+const LOCK_PW = 'Dolphins2026';
+const LOCK_TIMEOUT = 60 * 60 * 1000; // 60 minutes
+let isUnlocked = false;
+let lockTimer = null;
+
+function setLockState(unlocked){
+  isUnlocked = unlocked;
+  const btn = document.getElementById('lock-btn');
+  btn.textContent = unlocked ? '🔓' : '🔒';
+  btn.classList.toggle('unlocked', unlocked);
+  btn.title = unlocked ? 'Click to lock editing' : 'Click to unlock editing';
+  // Re-render so edit tap handlers respect lock state
+  renderAll();
+  // Auto-lock after timeout
+  clearTimeout(lockTimer);
+  if(unlocked){
+    lockTimer = setTimeout(() => setLockState(false), LOCK_TIMEOUT);
+  }
+}
+
+function toggleLock(){
+  if(isUnlocked){
+    // Already unlocked — lock immediately
+    setLockState(false);
+  } else {
+    // Show password prompt
+    document.getElementById('pin-input').value = '';
+    document.getElementById('pin-error').textContent = '';
+    document.getElementById('pin-input').classList.remove('error');
+    document.getElementById('lock-modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('pin-input').focus(), 100);
+  }
+}
+
+function closeLockModal(){
+  document.getElementById('lock-modal').style.display = 'none';
+}
+
+function submitPin(){
+  const val = document.getElementById('pin-input').value;
+  if(val === LOCK_PW){
+    closeLockModal();
+    setLockState(true);
+  } else {
+    const inp = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    inp.classList.add('error');
+    err.textContent = 'Incorrect password';
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('error'), 400);
+  }
+}
+
+// ── EDIT MODAL — guard with lock ──
+function openEdit(wi,q,pi){
+  if(!isUnlocked) return;
+  eWeek=wi;eQ=q;ePos=pi;
+  eSel=SEASON[wi].quarters[q][pi];
+  const w=SEASON[wi];const pos=POSITIONS[pi];
+  document.getElementById('modal-title').textContent=`Edit ${pos.id} – ${pos.name}`;
+  document.getElementById('modal-sub').textContent=`${w.date} · Q${q+1}`;
+  const opts=document.getElementById('player-opts');
+  opts.innerHTML='';
+  PLAYERS.forEach(p=>{
+    const b=document.createElement('button');
+    const sel=p.id===eSel;
+    b.className='player-opt'+(p.id===highlightId?' is-penny-opt':'')+(sel?' selected':'');
+    b.innerHTML=`<span>${p.name}</span><span class="opt-initials">${p.id}</span>`;
+    b.onclick=()=>{eSel=p.id;opts.querySelectorAll('.player-opt').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');};
+    opts.appendChild(b);
+  });
+  document.getElementById('modal').style.display='flex';
+}
+function closeModal(){document.getElementById('modal').style.display='none';}
+function saveEdit(){
+  SEASON[eWeek].quarters[eQ][ePos]=eSel;
+  saveData();closeModal();buildNav();renderAll();
+}
+
+// ── SHARE ──
+function openShare(){
+  const week = SEASON[cWeek];
+  document.getElementById('share-sub').textContent = `The Dolphins · ${week.date} 2026`;
+  drawShareCanvas();
+  document.getElementById('share-copied').textContent = '';
+  document.getElementById('share-modal').style.display = 'flex';
+}
+function closeShare(){ document.getElementById('share-modal').style.display = 'none'; }
+
+function drawShareCanvas(){
+  const week = SEASON[cWeek];
+  const canvas = document.getElementById('share-preview');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = 800, pad = 36;
+  const colW = (W - pad*2) / 5; // pos col + 4 quarters
+  const rowH = 44;
+  const headerH = 100;
+  const rows = POSITIONS.length + 1; // +1 bench
+  const H = headerH + rows * rowH + pad;
+
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = '100%';
+  canvas.style.height = 'auto';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Background
+  ctx.fillStyle = '#0d0d0d';
+  ctx.fillRect(0, 0, W, H);
+
+  // Red top bar
+  ctx.fillStyle = '#e8192c';
+  ctx.fillRect(0, 0, W, 6);
+
+  // Header
+  ctx.fillStyle = '#e8192c';
+  ctx.font = `bold 32px 'Arial Black', Arial, sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.fillText('🐬 THE DOLPHINS', pad, 46);
+  ctx.fillStyle = '#888';
+  ctx.font = `16px Arial, sans-serif`;
+  ctx.fillText(`Under 13s  ·  Winter 2026  ·  ${week.date}`, pad, 72);
+
+  // Q headers
+  const qs = ['Q1','Q2','Q3','Q4'];
+  ctx.fillStyle = '#e8192c';
+  ctx.font = `bold 15px Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  qs.forEach((q,i) => {
+    ctx.fillText(q, pad + colW + colW*(i+0.5), 94);
+  });
+
+  // Divider under header
+  ctx.strokeStyle = '#2e2e2e';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad, headerH);
+  ctx.lineTo(W - pad, headerH);
+  ctx.stroke();
+
+  // Rows
+  POSITIONS.forEach((pos, ri) => {
+    const y = headerH + ri * rowH;
+    // Alternating row bg
+    if(ri % 2 === 0){ ctx.fillStyle = '#161616'; ctx.fillRect(pad, y, W-pad*2, rowH); }
+
+    // Position label
+    ctx.fillStyle = '#e8192c';
+    ctx.font = `bold 15px Arial, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText(pos.id, pad + 4, y + 17);
+    ctx.fillStyle = '#555';
+    ctx.font = `11px Arial, sans-serif`;
+    ctx.fillText(pos.name, pad + 4, y + 32);
+
+    // Player names per quarter
+    [0,1,2,3].forEach((q) => {
+      const pid = week.quarters[q][ri];
+      const playerName = n(pid);
+      const hl = isHL(pid);
+      const cx = pad + colW + colW*(q+0.5);
+      const cy = y + rowH/2;
+
+      if(hl){
+        // Highlighted player pill
+        const tw = ctx.measureText(playerName).width + 20;
+        ctx.fillStyle = '#1a0508';
+        roundRect(ctx, cx - tw/2, cy - 13, tw, 26, 6);
+        ctx.fill();
+        ctx.strokeStyle = '#e8192c';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = '#ff6b7a';
+      } else {
+        ctx.fillStyle = '#f0ede6';
+      }
+      ctx.font = `${hl ? 'bold ' : ''}14px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(playerName, cx, cy + 5);
+    });
+
+    // Row divider
+    ctx.strokeStyle = '#1e1e1e';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad, y + rowH);
+    ctx.lineTo(W - pad, y + rowH);
+    ctx.stroke();
+  });
+
+  // Bench row
+  const benchY = headerH + POSITIONS.length * rowH;
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(pad, benchY, W-pad*2, rowH);
+  ctx.fillStyle = '#555';
+  ctx.font = `12px Arial, sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.fillText('BENCH', pad + 4, benchY + 27);
+  [0,1,2,3].forEach(q => {
+    const on = new Set(week.quarters[q]);
+    const bench = ALL_IDS.filter(p => !on.has(p)).map(p => n(p)).join(', ');
+    ctx.fillStyle = '#555';
+    ctx.font = `11px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(bench, pad + colW + colW*(q+0.5), benchY + 27);
+  });
+
+  // Col dividers
+  ctx.strokeStyle = '#2e2e2e';
+  ctx.lineWidth = 1;
+  for(let i=1;i<=4;i++){
+    const x = pad + colW*i;
+    ctx.beginPath();
+    ctx.moveTo(x, headerH);
+    ctx.lineTo(x, H - pad/2);
+    ctx.stroke();
+  }
+
+  // Footer
+  ctx.fillStyle = '#333';
+  ctx.font = `11px Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('The Dolphins · Under 13s · Winter 2026', W/2, H - 10);
+}
+
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function buildShareText(){
+  const week = SEASON[cWeek];
+  let txt = `🐬 THE DOLPHINS — ${week.date} 2026\n`;
+  txt += `Under 13s · Winter 2026\n`;
+  txt += `${'─'.repeat(34)}\n`;
+  const qLabels = ['Q1','Q2','Q3','Q4'];
+  const colW = 12;
+  txt += `${'POS'.padEnd(6)}`;
+  qLabels.forEach(q => { txt += q.padEnd(colW); });
+  txt += '\n' + '─'.repeat(6 + colW*4) + '\n';
+  POSITIONS.forEach((pos, i) => {
+    txt += pos.id.padEnd(6);
+    [0,1,2,3].forEach(q => {
+      txt += n(week.quarters[q][i]).padEnd(colW);
+    });
+    txt += '\n';
+  });
+  txt += '─'.repeat(6 + colW*4) + '\n';
+  txt += 'BENCH ';
+  [0,1,2,3].forEach(q => {
+    const on = new Set(week.quarters[q]);
+    txt += ALL_IDS.filter(p=>!on.has(p)).map(p=>n(p)).join(', ').padEnd(colW);
+  });
+  return txt;
+}
+
+function copyShareText(){
+  const txt = buildShareText();
+  navigator.clipboard.writeText(txt).then(() => {
+    const el = document.getElementById('share-copied');
+    el.textContent = '✓ Copied to clipboard!';
+    setTimeout(() => { el.textContent = ''; }, 2500);
+  }).catch(() => {
+    // Fallback for older mobile browsers
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const el = document.getElementById('share-copied');
+    el.textContent = '✓ Copied to clipboard!';
+    setTimeout(() => { el.textContent = ''; }, 2500);
+  });
+}
+
+function downloadImage(){
+  const canvas = document.getElementById('share-preview');
+  const dataUrl = canvas.toDataURL('image/png');
+  const win = window.open();
+  if(win){
+    win.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rotation</title><style>body{margin:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:12px;font-family:sans-serif;} img{max-width:100%;border-radius:8px;} p{color:#888;font-size:13px;text-align:center;padding:0 20px;}</style></head><body><img src="${dataUrl}"/><p>Long press the image to save or share</p></body></html>`);
+    win.document.close();
+  } else {
+    // Popup blocked — show image in same page overlay
+    const el = document.getElementById('share-copied');
+    el.textContent = 'Pop-up blocked — long press the preview above to save';
+    el.style.color = '#888';
+  }
+}
+
+// ── Auto-select today's game or next upcoming ──
+function autoSelectWeek(){
+  const now = new Date();
+  // Parse each game date as 2026
+  const dates = SEASON.map(w => new Date(w.date + ' 2026'));
+
+  // Check for exact match today (same day)
+  const todayStr = now.toDateString();
+  const todayIdx = dates.findIndex(d => d.toDateString() === todayStr);
+  if(todayIdx !== -1) return todayIdx;
+
+  // Otherwise find the next upcoming game
+  const future = dates.map((d,i) => ({i, diff: d - now})).filter(x => x.diff > 0);
+  if(future.length) return future.sort((a,b) => a.diff - b.diff)[0].i;
+
+  // Season finished — show last game
+  return SEASON.length - 1;
+}
+
+buildNav();
+updateHighlightBtn();
+cWeek = autoSelectWeek();
+buildNav();
+renderAll();
+</script>
+</body>
+</html>
