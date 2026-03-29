@@ -147,9 +147,36 @@
   @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
   .pin-error{color:var(--err);font-size:.78rem;text-align:center;min-height:18px;margin-bottom:8px;}
   .lock-status{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;color:#555;padding:2px 8px;border-radius:10px;border:1px solid #222;}
-    .bib-grid{grid-template-columns:repeat(2,1fr);}
-    .ov-table td,.ov-table th{padding:4px 3px;font-size:.7rem;}
-    .p-chip{font-size:.7rem;padding:2px 5px;}
+
+  /* Mobile overview cards — hidden on desktop */
+  .ov-mobile{display:none;}
+  .ov-q-card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+  .ov-q-header{background:var(--accent2);padding:8px 14px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.07em;color:#fff;}
+  .ov-q-row{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border);}
+  .ov-q-row:last-child{border-bottom:none;}
+  .ov-q-pos{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--accent);letter-spacing:.05em;min-width:36px;}
+  .ov-q-posname{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex:1;padding-left:6px;}
+  .ov-q-player{font-size:.88rem;font-weight:600;color:var(--text);}
+  .ov-q-player.is-hl{color:#ff6b7a;}
+  .ov-q-bench{padding:8px 14px;font-size:.75rem;color:var(--muted);font-style:italic;border-top:1px solid var(--border);background:#0a0a0a;}
+
+  @media(max-width:600px){
+    header .logo-img{height:60px;}
+    header p{font-size:.72rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;}
+    .week-nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none;}
+    .week-nav::-webkit-scrollbar{display:none;}
+    .week-btn{flex-shrink:0;font-size:.72rem;padding:5px 9px;}
+    .main-tab{font-size:.75rem;padding:9px 2px;}
+    .ov-table{display:none;}
+    .ov-mobile{display:block;}
+    .share-btn{font-size:.8rem;}
+    .bib-grid{grid-template-columns:repeat(2,1fr);gap:7px;}
+    .bib-id{font-size:1.7rem;}
+    .bib-player{font-size:.76rem;}
+    .handoff-row{grid-template-columns:1fr 24px 40px 24px 1fr;padding:7px 8px;}
+    .h-name{font-size:.75rem;}
+    .modal{padding:16px;}
+    .player-opts{max-height:260px;}
   }
 </style>
 </head>
@@ -170,6 +197,7 @@
 
   <div class="panel active" id="panel-overview">
     <div class="overview-wrap"><table class="ov-table" id="ov-table"></table></div>
+    <div class="ov-mobile" id="ov-mobile"></div>
     <button class="share-btn" onclick="openShare()">⬆ Share this week's rotation</button>
   </div>
   <div class="panel" id="panel-quarter">
@@ -487,6 +515,33 @@ function renderOverview(){
   });
   html+='</tr></tbody>';
   document.getElementById('ov-table').innerHTML=html;
+  renderMobileOverview();
+}
+
+function renderMobileOverview(){
+  const w=SEASON[cWeek];
+  const el=document.getElementById('ov-mobile');
+  const qLabels=['Q1','Q2','Q3','Q4'];
+  let html='';
+  [0,1,2,3].forEach(q=>{
+    html+=`<div class="ov-q-card">
+      <div class="ov-q-header">${qLabels[q]}</div>`;
+    POSITIONS.forEach((pos,i)=>{
+      const id=w.quarters[q][i];
+      const ip=isHL(id);
+      const click=isUnlocked?`onclick="openEdit(${cWeek},${q},${i})" style="cursor:pointer"`:'';
+      html+=`<div class="ov-q-row" ${click}>
+        <div class="ov-q-pos">${pos.id}</div>
+        <div class="ov-q-posname">${pos.name}</div>
+        <div class="ov-q-player${ip?' is-hl':''}">${n(id)}${ip?' ★':''}</div>
+      </div>`;
+    });
+    const on=new Set(w.quarters[q]);
+    const bench=ALL_IDS.filter(p=>!on.has(p)).map(p=>n(p)).join(', ');
+    html+=`<div class="ov-q-bench">🪑 Bench: ${bench}</div>`;
+    html+=`</div>`;
+  });
+  el.innerHTML=html;
 }
 
 // ── QUARTER ──
