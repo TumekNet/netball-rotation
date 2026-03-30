@@ -3,7 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Dolphins – Netball Rotation</title>
+<title>Frankston Dolphins – Netball Rotation</title>
+<meta name="description" content="Season rotation for the Frankston Dolphins Under 13s netball team – Winter 2026.">
+
+<!-- Open Graph (WhatsApp, Facebook, iMessage, Slack etc.) -->
+<meta property="og:title" content="Frankston Dolphins – Netball Rotation">
+<meta property="og:description" content="Under 13s · Winter 2026 · Quarter-by-quarter positions and bib handoffs.">
+<meta property="og:image" content="dolphins-logo.jpg">
+<meta property="og:type" content="website">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Frankston Dolphins – Netball Rotation">
+<meta name="twitter:description" content="Under 13s · Winter 2026 · Quarter-by-quarter positions and bib handoffs.">
+<meta name="twitter:image" content="dolphins-logo.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -160,7 +173,38 @@
   .ov-q-player.is-hl{color:#ff6b7a;}
   .ov-q-bench{padding:8px 14px;font-size:.75rem;color:var(--muted);font-style:italic;border-top:1px solid var(--border);background:#0a0a0a;}
 
-  @media(max-width:600px){
+  /* Absent players */
+  .absent-bar{background:#1a1008;border:1px solid #8B4500;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .absent-bar-label{font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:.06em;color:#cc7722;white-space:nowrap;}
+  .absent-chip{padding:4px 10px;border-radius:14px;background:#241206;border:1px solid #8B4500;font-size:.8rem;font-weight:600;color:#cc7722;display:flex;align-items:center;gap:5px;}
+  .absent-chip button{background:none;border:none;color:#cc7722;cursor:pointer;font-size:.9rem;padding:0;line-height:1;opacity:.7;}
+  .absent-chip button:hover{opacity:1;}
+  .absent-manage-btn{margin-left:auto;background:none;border:1px solid #8B4500;border-radius:8px;color:#cc7722;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;padding:4px 10px;cursor:pointer;white-space:nowrap;}
+  .absent-manage-btn:hover{background:#241206;}
+
+  /* Gap indicators in overview */
+  .p-chip.is-gap{background:#241206;color:#cc7722;border-color:#8B4500;}
+  .ov-q-player.is-gap{color:#cc7722;}
+
+  /* Absent modal */
+  .absent-player-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--court);margin-bottom:6px;}
+  .absent-player-row.is-absent{background:#1a1008;border-color:#8B4500;}
+  .absent-player-name{font-size:.9rem;font-weight:600;}
+  .absent-toggle{padding:5px 12px;border-radius:6px;border:none;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;}
+  .absent-toggle.mark{background:var(--court);color:var(--muted);border:1px solid var(--border);}
+  .absent-toggle.mark:hover{background:#241206;color:#cc7722;border-color:#8B4500;}
+  .absent-toggle.unmark{background:#241206;color:#cc7722;border:1px solid #8B4500;}
+  .absent-toggle.unmark:hover{background:#1a1008;}
+
+  /* Gap fill prompt */
+  .gap-section{background:#1a1008;border:1px solid #8B4500;border-radius:12px;padding:14px;margin-bottom:12px;}
+  .gap-section-title{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.06em;color:#cc7722;margin-bottom:10px;}
+  .gap-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #2a1a08;gap:8px;}
+  .gap-row:last-child{border-bottom:none;}
+  .gap-label{font-size:.82rem;color:var(--muted);}
+  .gap-label strong{color:#cc7722;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.05em;}
+  .gap-select{background:#0d0d0d;border:1px solid #8B4500;border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;padding:5px 8px;cursor:pointer;outline:none;}
+  .gap-select:focus{border-color:var(--accent);}
     header .logo-img{height:60px;}
     header p{font-size:.72rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;}
     .week-nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none;}
@@ -184,7 +228,7 @@
 <div class="app">
   <header>
     <img src="dolphins-logo.jpg" alt="Frankston Dolphins" class="logo-img">
-    <p>Under 13s · Winter 2026 · <button id="highlight-btn" class="hl-btn" onclick="openHighlightPicker()">★ Highlight a player</button> · <button id="lock-btn" class="lock-btn" onclick="toggleLock()" title="Lock / unlock editing">🔒</button></p>
+    <p>Under 13s · Winter 2026 · <button id="highlight-btn" class="hl-btn" onclick="openHighlightPicker()">★ Highlight a player</button> · <button id="absent-btn" class="hl-btn" onclick="openAbsentModal()" style="display:none">⚠ Absences</button> · <button id="lock-btn" class="lock-btn" onclick="toggleLock()" title="Lock / unlock editing">🔒</button></p>
   </header>
 
   <div class="week-nav" id="week-nav"></div>
@@ -196,6 +240,8 @@
   </div>
 
   <div class="panel active" id="panel-overview">
+    <div id="absent-bar" style="display:none"></div>
+    <div id="gap-section" style="display:none"></div>
     <div class="overview-wrap"><table class="ov-table" id="ov-table"></table></div>
     <div class="ov-mobile" id="ov-mobile"></div>
     <button class="share-btn" onclick="openShare()">⬆ Share this week's rotation</button>
@@ -220,6 +266,17 @@
       <div class="trans-tab" onclick="setTrans(2)">Q3 → Q4</div>
     </div>
     <div id="handoff-area"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="absent-modal" style="display:none" onclick="if(event.target===this)closeAbsentModal()">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-title">⚠ Absent Players</div>
+    <div class="modal-sub" id="absent-modal-sub" style="margin-bottom:14px;"></div>
+    <div id="absent-player-list"></div>
+    <div class="modal-btns" style="margin-top:8px;">
+      <button class="btn btn-cancel" onclick="closeAbsentModal()">Done</button>
+    </div>
   </div>
 </div>
 
@@ -492,18 +549,27 @@ function setTab(tab){
   renderAll();
 }
 
-function renderAll(){renderOverview();renderQuarter();renderHandoffs();}
+function renderAll(){
+  renderAbsentBar();
+  renderGapSection();
+  renderOverview();
+  renderQuarter();
+  renderHandoffs();
+}
 
 // ── OVERVIEW ──
 function renderOverview(){
   const w=SEASON[cWeek];
+  const absent=getAbsent(cWeek);
   let html=`<thead><tr><th class="pos-th">Position</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr></thead><tbody>`;
   POSITIONS.forEach((pos,i)=>{
     html+=`<tr><td class="pos-cell">${pos.id}<span>${pos.name}</span></td>`;
     [0,1,2,3].forEach(q=>{
       const id=w.quarters[q][i];
       const ip=isHL(id);
-      html+=`<td><span class="p-chip ${ip?'is-penny':'normal'}" style="cursor:${isUnlocked?'pointer':'default'}" onclick="openEdit(${cWeek},${q},${i})">${n(id)}${ip?' ★':''}</span></td>`;
+      const isAbs=absent.has(id);
+      const cls=isAbs?'is-gap':ip?'is-penny':'normal';
+      html+=`<td><span class="p-chip ${cls}" style="cursor:${isUnlocked?'pointer':'default'}" onclick="openEdit(${cWeek},${q},${i})">${n(id)}${ip&&!isAbs?' ★':''}${isAbs?' ✕':''}</span></td>`;
     });
     html+='</tr>';
   });
@@ -520,6 +586,7 @@ function renderOverview(){
 
 function renderMobileOverview(){
   const w=SEASON[cWeek];
+  const absent=getAbsent(cWeek);
   const el=document.getElementById('ov-mobile');
   const qLabels=['Q1','Q2','Q3','Q4'];
   let html='';
@@ -529,11 +596,13 @@ function renderMobileOverview(){
     POSITIONS.forEach((pos,i)=>{
       const id=w.quarters[q][i];
       const ip=isHL(id);
+      const isAbs=absent.has(id);
+      const cls=isAbs?'is-gap':ip?'is-hl':'';
       const click=isUnlocked?`onclick="openEdit(${cWeek},${q},${i})" style="cursor:pointer"`:'';
       html+=`<div class="ov-q-row" ${click}>
         <div class="ov-q-pos">${pos.id}</div>
         <div class="ov-q-posname">${pos.name}</div>
-        <div class="ov-q-player${ip?' is-hl':''}">${n(id)}${ip?' ★':''}</div>
+        <div class="ov-q-player ${cls}">${n(id)}${ip&&!isAbs?' ★':''}${isAbs?' ✕':''}</div>
       </div>`;
     });
     const on=new Set(w.quarters[q]);
@@ -554,17 +623,22 @@ function setQ(q){
 function renderQuarter(){
   const w=SEASON[cWeek];
   const qd=w.quarters[cQ];
+  const absent=getAbsent(cWeek);
   const grid=document.getElementById('bib-grid');
   grid.innerHTML='';
   POSITIONS.forEach((pos,i)=>{
-    const id=qd[i];const ip=isHL(id);
+    const id=qd[i];
+    const ip=isHL(id);
+    const isAbs=absent.has(id);
     const card=document.createElement('div');
-    card.className='bib-card'+(ip?' is-penny':'');
+    card.className='bib-card'+(ip&&!isAbs?' is-penny':'');
+    if(isAbs) card.style.cssText='border-color:#8B4500;background:#1a1008;';
     card.onclick=()=>openEdit(cWeek,cQ,i);
-    card.style.cursor = isUnlocked ? 'pointer' : 'default';
-    card.innerHTML=`<div class="bib-id" style="color:${ip?'#ff6b7a':'var(--accent)'}">${pos.id}</div>
+    card.style.cursor=isUnlocked?'pointer':'default';
+    const idColor=isAbs?'#cc7722':ip?'#ff6b7a':'var(--accent)';
+    card.innerHTML=`<div class="bib-id" style="color:${idColor}">${pos.id}</div>
       <div class="bib-pos-name">${pos.name}</div>
-      <div class="bib-player${ip?' is-penny':''}">${n(id)}${ip?' ★':''}</div>`;
+      <div class="bib-player${ip&&!isAbs?' is-penny':''}" style="${isAbs?'color:#cc7722;background:#241206;border-color:#8B4500;':''}">${n(id)}${isAbs?' ✕':ip?' ★':''}</div>`;
     grid.appendChild(card);
   });
   const on=new Set(qd);
@@ -628,9 +702,9 @@ function setLockState(unlocked){
   btn.textContent = unlocked ? '🔓' : '🔒';
   btn.classList.toggle('unlocked', unlocked);
   btn.title = unlocked ? 'Click to lock editing' : 'Click to unlock editing';
-  // Re-render so edit tap handlers respect lock state
+  // Show absent button only when unlocked
+  document.getElementById('absent-btn').style.display = unlocked ? '' : 'none';
   renderAll();
-  // Auto-lock after timeout
   clearTimeout(lockTimer);
   if(unlocked){
     lockTimer = setTimeout(() => setLockState(false), LOCK_TIMEOUT);
@@ -920,7 +994,109 @@ function downloadImage(){
   }
 }
 
-// ── Auto-select today's game or next upcoming ──
+// ── ABSENT PLAYERS ──
+// absentByWeek: { weekIndex: Set of player IDs }
+let absentByWeek = {};
+
+function getAbsent(wi){ return absentByWeek[wi] || new Set(); }
+
+function toggleAbsent(wi, pid){
+  if(!absentByWeek[wi]) absentByWeek[wi] = new Set();
+  if(absentByWeek[wi].has(pid)) absentByWeek[wi].delete(pid);
+  else absentByWeek[wi].add(pid);
+  renderAbsentModal();
+  renderAll();
+}
+
+function openAbsentModal(){
+  const week = SEASON[cWeek];
+  document.getElementById('absent-modal-sub').textContent = `${week.date} 2026 — mark players who won't be there`;
+  renderAbsentModal();
+  document.getElementById('absent-modal').style.display = 'flex';
+}
+function closeAbsentModal(){ document.getElementById('absent-modal').style.display = 'none'; }
+
+function renderAbsentModal(){
+  const absent = getAbsent(cWeek);
+  const list = document.getElementById('absent-player-list');
+  list.innerHTML = '';
+  PLAYERS.forEach(p => {
+    const isAbs = absent.has(p.id);
+    const row = document.createElement('div');
+    row.className = 'absent-player-row' + (isAbs ? ' is-absent' : '');
+    row.innerHTML = `
+      <span class="absent-player-name" style="color:${isAbs?'#cc7722':'var(--text)'}">${p.name}</span>
+      <button class="absent-toggle ${isAbs?'unmark':'mark'}" onclick="toggleAbsent(${cWeek},'${p.id}')">
+        ${isAbs ? '✓ Absent' : 'Mark absent'}
+      </button>`;
+    list.appendChild(row);
+  });
+}
+
+function renderAbsentBar(){
+  const absent = getAbsent(cWeek);
+  const bar = document.getElementById('absent-bar');
+  if(absent.size === 0){ bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  const manageBtn = isUnlocked ? `<button class="absent-manage-btn" onclick="openAbsentModal()">Manage</button>` : '';
+  bar.className = 'absent-bar';
+  bar.innerHTML = `
+    <span class="absent-bar-label">⚠ Absent</span>
+    ${[...absent].map(pid => `
+      <span class="absent-chip">${n(pid)}
+        ${isUnlocked ? `<button onclick="toggleAbsent(${cWeek},'${pid}')" title="Remove">×</button>` : ''}
+      </span>`).join('')}
+    ${manageBtn}`;
+}
+
+function renderGapSection(){
+  const absent = getAbsent(cWeek);
+  const section = document.getElementById('gap-section');
+  if(absent.size === 0 || !isUnlocked){ section.style.display = 'none'; return; }
+
+  const week = SEASON[cWeek];
+  // Find every [quarter, posIndex] where an absent player is scheduled
+  const gaps = [];
+  [0,1,2,3].forEach(q => {
+    week.quarters[q].forEach((pid, pi) => {
+      if(absent.has(pid)) gaps.push({q, pi, pid});
+    });
+  });
+
+  if(gaps.length === 0){ section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  // Available replacements = bench players for that quarter who aren't absent
+  const qLabels = ['Q1','Q2','Q3','Q4'];
+  let html = `<div class="gap-section">
+    <div class="gap-section-title">⚠ ${gaps.length} position${gaps.length>1?'s':''} need filling</div>`;
+
+  gaps.forEach(({q, pi, pid}) => {
+    const pos = POSITIONS[pi];
+    const onCourt = new Set(week.quarters[q]);
+    const available = ALL_IDS.filter(p => !onCourt.has(p) && !absent.has(p));
+    html += `<div class="gap-row">
+      <div class="gap-label"><strong>${qLabels[q]} ${pos.id}</strong><br>${pos.name} — <span style="color:#cc7722">${n(pid)} absent</span></div>
+      <select class="gap-select" onchange="fillGap(${cWeek},${q},${pi},this.value)">
+        <option value="">Replace with…</option>
+        ${available.map(p => `<option value="${p}">${n(p)}</option>`).join('')}
+      </select>
+    </div>`;
+  });
+
+  html += '</div>';
+  section.innerHTML = html;
+}
+
+function fillGap(wi, q, pi, pid){
+  if(!pid) return;
+  SEASON[wi].quarters[q][pi] = pid;
+  // Remove from absent since they're now assigned
+  saveData();
+  renderAll();
+}
+
+// ── Week nav ──
 function autoSelectWeek(){
   const now = new Date();
   // Parse each game date as 2026
