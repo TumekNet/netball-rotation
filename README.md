@@ -26,7 +26,7 @@ A game-day rotation tool for the Frankston Dolphins Under 13s netball team. Buil
 Open the app in any web browser on your phone, tablet or computer:
 
 ```
-https://your-netlify-url.netlify.app
+[https://your-netlify-url.netlify.app](https://dolphins-rotation.netlify.app/)
 ```
 
 The app will automatically jump to **today's game**. If today isn't a game day, it will show the **next upcoming game** in the season. You can always tap any other date manually.
