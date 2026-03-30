@@ -129,7 +129,11 @@
   .player-opt.selected{background:var(--accent);color:#fff;border-color:var(--accent);}
   .player-opt.is-penny-opt{border-color:#e8192c;color:#ff6b7a;}
   .player-opt.is-penny-opt.selected{background:#e8192c;color:#fff;}
-  .opt-initials{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.06em;opacity:.6;}
+  .player-opt.on-court{opacity:.6;}
+  .player-opt.on-court:hover{opacity:1;}
+  .opt-position{font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:#222;color:var(--accent);border:1px solid #333;white-space:nowrap;}
+  .opt-position.bench{color:var(--muted);background:#111;border-color:#222;}
+  .opt-group-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#444;padding:6px 2px 2px;}
   .modal-btns{display:flex;gap:8px;}
   .btn{flex:1;padding:10px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .15s;}
   .btn-save{background:var(--accent);color:#111;}
@@ -747,21 +751,63 @@ function submitPin(){
 // ── EDIT MODAL — guard with lock ──
 function openEdit(wi,q,pi){
   if(!isUnlocked) return;
-  eWeek=wi;eQ=q;ePos=pi;
+  eWeek=wi; eQ=q; ePos=pi;
   eSel=SEASON[wi].quarters[q][pi];
-  const w=SEASON[wi];const pos=POSITIONS[pi];
-  document.getElementById('modal-title').textContent=`Edit ${pos.id} – ${pos.name}`;
-  document.getElementById('modal-sub').textContent=`${w.date} · Q${q+1}`;
+  const w=SEASON[wi]; const pos=POSITIONS[pi];
+  document.getElementById('modal-title').textContent=`${pos.id} – ${pos.name}`;
+  document.getElementById('modal-sub').textContent=`${w.date} · Q${q+1} · Bench players shown first`;
   const opts=document.getElementById('player-opts');
   opts.innerHTML='';
-  PLAYERS.forEach(p=>{
-    const b=document.createElement('button');
-    const sel=p.id===eSel;
-    b.className='player-opt'+(p.id===highlightId?' is-penny-opt':'')+(sel?' selected':'');
-    b.innerHTML=`<span>${p.name}</span><span class="opt-initials">${p.id}</span>`;
-    b.onclick=()=>{eSel=p.id;opts.querySelectorAll('.player-opt').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');};
-    opts.appendChild(b);
+
+  // Build a map of playerId → position they're playing this quarter (excluding current slot)
+  const courtMap = {};
+  w.quarters[q].forEach((pid, i) => {
+    if(i !== pi) courtMap[pid] = POSITIONS[i].id;
   });
+
+  // Split into bench (free) and on-court
+  const benchPlayers = PLAYERS.filter(p => !courtMap[p.id]);
+  const courtPlayers = PLAYERS.filter(p =>  courtMap[p.id]);
+
+  function makeOpt(p){
+    const b = document.createElement('button');
+    const sel = p.id === eSel;
+    const onCourt = !!courtMap[p.id];
+    const isHL = p.id === highlightId;
+    b.className = 'player-opt'
+      + (isHL ? ' is-penny-opt' : '')
+      + (sel  ? ' selected'     : '')
+      + (onCourt && !sel ? ' on-court' : '');
+    const badge = onCourt
+      ? `<span class="opt-position">${courtMap[p.id]}</span>`
+      : `<span class="opt-position bench">Bench</span>`;
+    b.innerHTML = `<span>${p.name}</span>${badge}`;
+    b.onclick = () => {
+      eSel = p.id;
+      opts.querySelectorAll('.player-opt').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+    };
+    return b;
+  }
+
+  // Bench group
+  if(benchPlayers.length){
+    const lbl = document.createElement('div');
+    lbl.className = 'opt-group-label';
+    lbl.textContent = 'Available — on bench';
+    opts.appendChild(lbl);
+    benchPlayers.forEach(p => opts.appendChild(makeOpt(p)));
+  }
+
+  // On-court group
+  if(courtPlayers.length){
+    const lbl = document.createElement('div');
+    lbl.className = 'opt-group-label';
+    lbl.textContent = 'Already on court — will swap';
+    opts.appendChild(lbl);
+    courtPlayers.forEach(p => opts.appendChild(makeOpt(p)));
+  }
+
   document.getElementById('modal').style.display='flex';
 }
 function closeModal(){document.getElementById('modal').style.display='none';}
