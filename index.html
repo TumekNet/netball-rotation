@@ -157,6 +157,14 @@
   .lock-btn:hover{opacity:1;background:#1e1e1e;}
   .lock-btn.unlocked{opacity:1;color:#e8192c;}
 
+  /* CSV upload modal */
+  .csv-file-input{width:100%;padding:10px 14px;border-radius:9px;border:1px solid var(--border);background:var(--court);color:var(--text);font-size:.88rem;cursor:pointer;margin-bottom:10px;}
+  .csv-errors{background:#1a0a0a;border:1px solid var(--err);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.78rem;color:var(--err);max-height:160px;overflow-y:auto;}
+  .csv-errors ul{margin:4px 0 0 16px;padding:0;}.csv-errors li{margin-bottom:3px;}
+  .csv-success{background:#0a1f0e;border:1px solid #4caf7d;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.78rem;color:#4caf7d;}
+  .csv-dl{display:block;text-align:center;color:var(--muted);font-size:.78rem;text-decoration:underline;cursor:pointer;margin-bottom:14px;}
+  .csv-dl:hover{color:var(--text);}
+
   /* Password modal */
   .pin-input{width:100%;padding:12px 14px;border-radius:9px;border:1px solid var(--border);background:var(--court);color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;outline:none;transition:border .2s;margin-bottom:10px;letter-spacing:.1em;}
   .pin-input:focus{border-color:var(--accent);}
@@ -232,7 +240,7 @@
 <div class="app">
   <header>
     <img src="dolphins-logo.jpg" alt="Frankston Dolphins" class="logo-img">
-    <p>Under 13s · Winter 2026 · <button id="highlight-btn" class="hl-btn" onclick="openHighlightPicker()">★ Highlight a player</button> · <button id="absent-btn" class="hl-btn" onclick="openAbsentModal()" style="display:none">⚠ Absences</button> · <button id="lock-btn" class="lock-btn" onclick="toggleLock()" title="Lock / unlock editing">🔒</button></p>
+    <p>Under 13s · Winter 2026 · <button id="highlight-btn" class="hl-btn" onclick="openHighlightPicker()">★ Highlight a player</button> · <button id="absent-btn" class="hl-btn" onclick="openAbsentModal()" style="display:none">⚠ Absences</button> · <button id="upload-btn" class="hl-btn" onclick="openUploadModal()" style="display:none">⬆ Upload CSV</button> · <button id="lock-btn" class="lock-btn" onclick="toggleLock()" title="Lock / unlock editing">🔒</button></p>
   </header>
 
   <div class="week-nav" id="week-nav"></div>
@@ -330,6 +338,21 @@
       <button class="btn btn-save" onclick="downloadImage()">🖼 Open image</button>
     </div>
     <div id="share-copied" style="text-align:center;font-size:.78rem;color:#4caf7d;margin-top:8px;min-height:18px;"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="upload-modal" style="display:none" onclick="if(event.target===this)closeUploadModal()">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-title">⬆ Upload CSV</div>
+    <div class="modal-sub">Import a full season schedule from a CSV file.</div>
+    <a class="csv-dl" onclick="downloadCurrentCSV()">⬇ Download current data as CSV</a>
+    <input class="csv-file-input" type="file" id="csv-file-input" accept=".csv,text/csv" onchange="handleCSVFile(this)">
+    <div id="csv-feedback" style="display:none"></div>
+    <div id="csv-summary" style="display:none;font-size:.78rem;color:var(--muted);margin-bottom:12px;"></div>
+    <div class="modal-btns">
+      <button class="btn btn-cancel" onclick="closeUploadModal()">Cancel</button>
+      <button class="btn btn-save" id="csv-confirm-btn" onclick="confirmCSVImport()" disabled style="opacity:.4;cursor:not-allowed">Import</button>
+    </div>
   </div>
 </div>
 
@@ -706,8 +729,9 @@ function setLockState(unlocked){
   btn.textContent = unlocked ? '🔓' : '🔒';
   btn.classList.toggle('unlocked', unlocked);
   btn.title = unlocked ? 'Click to lock editing' : 'Click to unlock editing';
-  // Show absent button only when unlocked
+  // Show absent/upload buttons only when unlocked
   document.getElementById('absent-btn').style.display = unlocked ? '' : 'none';
+  document.getElementById('upload-btn').style.display = unlocked ? '' : 'none';
   renderAll();
   clearTimeout(lockTimer);
   if(unlocked){
@@ -1159,6 +1183,124 @@ function autoSelectWeek(){
 
   // Season finished — show last game
   return SEASON.length - 1;
+}
+
+// ── CSV UPLOAD / EXPORT ──
+
+function openUploadModal(){
+  if(!isUnlocked) return;
+  document.getElementById('csv-file-input').value = '';
+  document.getElementById('csv-feedback').style.display = 'none';
+  document.getElementById('csv-summary').style.display = 'none';
+  const btn = document.getElementById('csv-confirm-btn');
+  btn.disabled = true; btn.style.opacity = '.4'; btn.style.cursor = 'not-allowed';
+  window._csvParsed = null;
+  document.getElementById('upload-modal').style.display = 'flex';
+}
+
+function closeUploadModal(){
+  document.getElementById('upload-modal').style.display = 'none';
+  window._csvParsed = null;
+}
+
+function handleCSVFile(inputEl){
+  const file = inputEl.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => renderCSVFeedback(parseAndValidateCSV(e.target.result));
+  reader.readAsText(file);
+}
+
+function parseAndValidateCSV(text){
+  const errors = [];
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+  if(lines[0].charCodeAt(0)===0xFEFF) lines[0]=lines[0].slice(1);
+  const nonEmpty = lines.map(l=>l.trim()).filter(Boolean);
+  if(!nonEmpty.length) return {ok:false, errors:['File is empty.'], data:null};
+
+  const header = nonEmpty[0].split(',').map(c=>c.trim().toUpperCase()).join(',');
+  if(header !== 'DATE,POSITION,Q1,Q2,Q3,Q4')
+    return {ok:false, errors:['First row must be: DATE,POSITION,Q1,Q2,Q3,Q4'], data:null};
+
+  const VALID_POS = POSITIONS.map(p=>p.id);
+  const VALID_IDS = new Set(PLAYERS.map(p=>p.id));
+
+  const dateOrder = [], byDate = {};
+  nonEmpty.slice(1).forEach(line => {
+    const cols = line.split(',').map(c=>c.trim());
+    const date = cols[0], pos = (cols[1]||'').toUpperCase();
+    const q = [2,3,4,5].map(i=>(cols[i]||'').trim().toUpperCase());
+    if(!byDate[date]){ byDate[date]={}; dateOrder.push(date); }
+    byDate[date][pos] = q;
+  });
+
+  dateOrder.forEach(date => {
+    const block = byDate[date];
+    const missing = VALID_POS.filter(p=>!block[p]);
+    if(missing.length){ errors.push(`${date}: missing positions ${missing.join(', ')}`); return; }
+    [0,1,2,3].forEach(qi => {
+      const seen = new Set();
+      VALID_POS.forEach((posId, pi) => {
+        const pid = block[posId][qi];
+        if(!VALID_IDS.has(pid)) errors.push(`${date} Q${qi+1} ${posId}: unknown player "${pid}"`);
+        else if(seen.has(pid))  errors.push(`${date} Q${qi+1}: "${pid}" appears more than once`);
+        else seen.add(pid);
+      });
+    });
+  });
+
+  if(errors.length) return {ok:false, errors, data:null};
+  const data = dateOrder.map(date => ({
+    date,
+    quarters: [0,1,2,3].map(qi => VALID_POS.map(posId => byDate[date][posId][qi]))
+  }));
+  return {ok:true, errors:[], data};
+}
+
+function renderCSVFeedback(result){
+  const fb = document.getElementById('csv-feedback');
+  const sm = document.getElementById('csv-summary');
+  const btn = document.getElementById('csv-confirm-btn');
+  fb.style.display = 'block';
+  if(!result.ok){
+    fb.className = 'csv-errors';
+    fb.innerHTML = `<strong>⚠ ${result.errors.length} error${result.errors.length>1?'s':''} found:</strong><ul>${result.errors.map(e=>`<li>${e}</li>`).join('')}</ul>`;
+    sm.style.display = 'none';
+    btn.disabled = true; btn.style.opacity = '.4'; btn.style.cursor = 'not-allowed';
+    window._csvParsed = null;
+  } else {
+    fb.className = 'csv-success';
+    fb.textContent = `✓ ${result.data.length} game${result.data.length>1?'s':''} parsed with no errors.`;
+    sm.style.display = 'block';
+    sm.textContent = `Games: ${result.data.map(w=>w.date).join(', ')}`;
+    btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+    window._csvParsed = result.data;
+  }
+}
+
+function confirmCSVImport(){
+  if(!isUnlocked || !window._csvParsed) return;
+  SEASON = window._csvParsed;
+  saveData();
+  cWeek = 0;
+  closeUploadModal();
+  buildNav();
+  renderAll();
+}
+
+function downloadCurrentCSV(){
+  const VALID_POS = POSITIONS.map(p=>p.id);
+  const rows = ['DATE,POSITION,Q1,Q2,Q3,Q4'];
+  SEASON.forEach(week => {
+    VALID_POS.forEach((posId, pi) => {
+      rows.push(`${week.date},${posId},${week.quarters[0][pi]},${week.quarters[1][pi]},${week.quarters[2][pi]},${week.quarters[3][pi]}`);
+    });
+  });
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), {href:url, download:'netball-rotation.csv'});
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
 }
 
 buildNav();
